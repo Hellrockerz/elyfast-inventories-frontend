@@ -358,7 +358,7 @@ export default function SellPage() {
 
       {/* Checkout Success Modal */}
       <Dialog open={isSuccessOpen} onOpenChange={setIsSuccessOpen}>
-        <DialogContent className="glass border-border text-foreground backdrop-blur-3xl shadow-2xl p-0 overflow-hidden print:hidden">
+        <DialogContent className="glass border-border text-foreground backdrop-blur-3xl shadow-2xl p-0 overflow-hidden print:hidden [&>button]:hidden">
           <div className="bg-green-500/20 p-8 text-center relative">
             <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl shadow-green-500/30">
               <Check className="w-12 h-12 text-white stroke-[3px]" />
