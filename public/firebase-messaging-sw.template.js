@@ -2,13 +2,13 @@ importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js')
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDIbJWUwxYj8P5EzO8fwNiaZIbmAWeNklU",
-  authDomain: "elyfast-inventory.firebaseapp.com",
-  projectId: "elyfast-inventory",
-  storageBucket: "elyfast-inventory.firebasestorage.app",
-  messagingSenderId: "345402873839",
-  appId: "1:345402873839:web:490de17920675daec3481a",
-  measurementId: "G-CFQEZVMZBF"
+  apiKey: "%%NEXT_PUBLIC_FIREBASE_API_KEY%%",
+  authDomain: "%%NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN%%",
+  projectId: "%%NEXT_PUBLIC_FIREBASE_PROJECT_ID%%",
+  storageBucket: "%%NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET%%",
+  messagingSenderId: "%%NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID%%",
+  appId: "%%NEXT_PUBLIC_FIREBASE_APP_ID%%",
+  measurementId: "%%NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID%%"
 };
 
 firebase.initializeApp(firebaseConfig);

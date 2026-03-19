@@ -34,3 +34,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Generated service worker — built from firebase-messaging-sw.template.js by prebuild script
+# Contains secrets injected from env vars; must NEVER be committed
+public/firebase-messaging-sw.js
+
+# PWA generated files
+public/sw.js
+public/workbox-*.js
+public/swe-worker-*.js
