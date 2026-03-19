@@ -10,7 +10,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 
 export default function Dashboard() {
   const [userName, setUserName] = useState('Shopkeeper');
-  const [shopName, setShopName] = useState('Elyfast Stock');
+  const [shopName, setShopName] = useState('Elyfast Inventories');
   const router = useRouter();
 
   useEffect(() => {
@@ -28,7 +28,7 @@ export default function Dashboard() {
         .where('createdAt')
         .above(today)
         .toArray();
-      
+
       return {
         total: todayInvoices.reduce((acc, inv) => acc + inv.totalAmount, 0),
         count: todayInvoices.length
@@ -80,22 +80,24 @@ export default function Dashboard() {
 
       {/* Header */}
       <div className="flex justify-between items-center mb-10 relative z-10">
-        <div>
-          <h1 className="text-4xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/60">
-            {shopName}
-          </h1>
-          <p className="text-muted-foreground font-medium flex items-center gap-2">
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-4xl font-black tracking-tighter text-foreground">
+              {shopName}
+            </h1>
+            <p className="text-muted-foreground font-medium flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
             Welcome back, {userName}
           </p>
         </div>
+      </div>
         <div className="flex items-center space-x-3">
           <Link href="/settings">
             <div className="w-12 h-12 rounded-2xl glass flex items-center justify-center cursor-pointer active:scale-90 transition-transform hover:bg-white/5">
               <Settings className="w-6 h-6 text-foreground/80" />
             </div>
           </Link>
-          <button 
+          <button
             onClick={handleLogout}
             className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center cursor-pointer active:scale-95 transition-transform hover:bg-red-500/20"
           >

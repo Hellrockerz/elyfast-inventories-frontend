@@ -6,18 +6,19 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { LogIn, Smartphone, UserPlus, ShieldCheck, Mail, Building2, Store } from 'lucide-react';
 import { cn } from '@/lib/design-system';
-import { 
-  auth, 
-  GoogleAuthProvider, 
-  initMessaging, 
-  getToken 
+import {
+  auth,
+  GoogleAuthProvider,
+  initMessaging,
+  getToken
 } from '@/lib/firebase';
-import { 
-  signInWithPopup, 
-  RecaptchaVerifier, 
+import {
+  signInWithPopup,
+  RecaptchaVerifier,
   signInWithPhoneNumber,
   ConfirmationResult
 } from 'firebase/auth';
+import api from '@/lib/api';
 import { toast } from 'sonner';
 
 export default function LoginPage() {
@@ -45,8 +46,8 @@ export default function LoginPage() {
     try {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
-        const token = await getToken(messagingInstance, { 
-          vapidKey: 'BMGc-n425T8RgQgbh-LqvWrZ21-jyLGEe3osYS0fHZM-kM5O12_FM90Y-CLNe_P6FeAVrTihlkqrnCZtdok9NjA' 
+        const token = await getToken(messagingInstance, {
+          vapidKey: 'BMGc-n425T8RgQgbh-LqvWrZ21-jyLGEe3osYS0fHZM-kM5O12_FM90Y-CLNe_P6FeAVrTihlkqrnCZtdok9NjA'
         });
         console.log('FCM Token:', token);
         localStorage.setItem('fcmToken', token);
@@ -107,9 +108,8 @@ export default function LoginPage() {
     setLoading(true);
     setOwnerId(uid);
     try {
-      const res = await fetch(`http://localhost:3005/api/auth/check/${uid}`);
-      const data = await res.json();
-      
+      const { data } = await api.get(`/auth/check/${uid}`);
+
       if (data.exists) {
         localStorage.setItem('shopId', data.shopId);
         localStorage.setItem('shopName', data.shopName);
@@ -140,13 +140,8 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:3005/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(shopData),
-      });
-      const data = await res.json();
-      
+      const { data } = await api.post('/auth/register', shopData);
+
       if (data.status === 'success') {
         localStorage.setItem('shopId', data.shopId);
         localStorage.setItem('shopName', String(shopData.name));
@@ -164,17 +159,22 @@ export default function LoginPage() {
     <div className="min-h-screen bg-transparent text-foreground flex items-center justify-center p-6 relative overflow-hidden">
       {/* Recaptcha Container */}
       <div id="recaptcha-container"></div>
-      
+
       {/* Background Blobs */}
       <div className="absolute top-[10%] -left-20 w-80 h-80 bg-blue-600/10 dark:bg-blue-600/20 rounded-full blur-[120px] -z-10 animate-pulse" />
       <div className="absolute bottom-[10%] -right-20 w-96 h-96 bg-purple-600/10 dark:bg-purple-600/20 rounded-full blur-[130px] -z-10" />
 
-      <GlassCard className="w-full max-w-md p-8 shadow-[0_20px_50px_rgba(0,0,0,0.2)] border-border relative z-10 transition-all duration-700">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-600 rounded-2xl mx-auto flex items-center justify-center shadow-lg mb-4">
-            <Store className="w-8 h-8 text-white" />
+      <GlassCard className="w-full max-w-xl p-8 shadow-[0_20px_50px_rgba(0,0,0,0.2)] border-border relative z-10 transition-all duration-700">
+        <div className="text-center mb-10 pt-4">
+          <div className="w-full flex items-center justify-center mb-8">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img 
+              src="/logo.png" 
+              alt="Elyfast Inventories Logo" 
+              className="w-full max-w-[480px] h-auto object-contain dark:invert drop-shadow-[0_10px_25px_rgba(0,0,0,0.5)]" 
+            />
           </div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">Elyfast Stock</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground">Elyfast Inventories</h1>
           <p className="text-muted-foreground mt-2">
             {!showRegister ? 'Start your digital shop in seconds' : 'Complete your shop profile'}
           </p>
@@ -184,7 +184,7 @@ export default function LoginPage() {
           <div className="space-y-6">
             {!phoneMode ? (
               <div className="space-y-4">
-                <Button 
+                <Button
                   disabled={loading}
                   onClick={handleGoogleLogin}
                   className="w-full bg-white text-slate-900 hover:bg-slate-100 h-12 rounded-xl font-bold flex items-center justify-center space-x-3 shadow-xl transition-all active:scale-95 disabled:opacity-50"
@@ -193,7 +193,7 @@ export default function LoginPage() {
                   <img src="https://www.google.com/favicon.ico" className="w-4 h-4" alt="Google" />
                   <span>{loading ? 'Authenticating...' : 'Continue with Google'}</span>
                 </Button>
-                <Button 
+                <Button
                   disabled={loading}
                   onClick={() => setPhoneMode(true)}
                   className="w-full bg-slate-800 border border-white/10 text-white hover:bg-slate-700 h-12 rounded-xl font-bold flex items-center justify-center space-x-3 transition-all active:scale-95 disabled:opacity-50"
@@ -210,11 +210,11 @@ export default function LoginPage() {
                       <Label>Phone Number</Label>
                       <div className="relative">
                         <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
-                        <Input 
-                          placeholder="+91 99999 99999" 
+                        <Input
+                          placeholder="+91 99999 99999"
                           value={phoneNumber}
                           onChange={(e) => setPhoneNumber(e.target.value)}
-                          className="pl-10 h-12 bg-white/5 border-white/10 rounded-xl focus:border-blue-500" 
+                          className="pl-10 h-12 bg-white/5 border-white/10 rounded-xl focus:border-blue-500"
                           type="tel"
                           required
                         />
@@ -228,11 +228,11 @@ export default function LoginPage() {
                   <form onSubmit={handleVerifyOtp} className="space-y-4">
                     <div className="space-y-2">
                       <Label>Enter OTP</Label>
-                      <Input 
-                        placeholder="123456" 
+                      <Input
+                        placeholder="123456"
                         value={otp}
                         onChange={(e) => setOtp(e.target.value)}
-                        className="h-12 bg-white/5 border-white/10 rounded-xl focus:border-blue-500 text-center tracking-widest text-xl" 
+                        className="h-12 bg-white/5 border-white/10 rounded-xl focus:border-blue-500 text-center tracking-widest text-xl"
                         maxLength={6}
                         required
                       />
@@ -242,7 +242,7 @@ export default function LoginPage() {
                     </Button>
                   </form>
                 )}
-                  <button 
+                <button
                   type="button"
                   onClick={() => { setPhoneMode(false); setConfirmationResult(null); }}
                   className="w-full text-muted-foreground text-sm hover:text-foreground py-2"
@@ -261,7 +261,7 @@ export default function LoginPage() {
                 <Input name="shopName" required placeholder="Enter shop name" className="pl-10 h-12 bg-white/5 border-white/10 rounded-xl focus:border-blue-500" />
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <Label>Full Name / Owner Name</Label>
               <div className="relative">
@@ -290,8 +290,8 @@ export default function LoginPage() {
               <Label>Business Type</Label>
               <div className="relative">
                 <Store className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
-                <select 
-                  name="businessType" 
+                <select
+                  name="businessType"
                   defaultValue="pharmacy"
                   className="w-full h-12 bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 focus:ring-2 focus:ring-blue-500 outline-none transition-all appearance-none text-white disabled:opacity-50"
                   required

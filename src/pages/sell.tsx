@@ -23,7 +23,7 @@ export default function SellPage() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
-  
+
   useEffect(() => {
     const sId = localStorage.getItem('shopId');
     const sName = localStorage.getItem('shopName');
@@ -37,8 +37,8 @@ export default function SellPage() {
       if (!searchTerm) return [];
       const results = await db.items
         .where('status').notEqual('deleted')
-        .and(item => 
-          item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        .and(item =>
+          item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           (item.barcode ? item.barcode.includes(searchTerm) : false)
         )
         .limit(5)
@@ -52,7 +52,7 @@ export default function SellPage() {
   const addToBill = (item: Item) => {
     const existing = billItems.find(i => i.id === item.id);
     if (existing) {
-      setBillItems(billItems.map(i => 
+      setBillItems(billItems.map(i =>
         i.id === item.id ? { ...i, billingQuantity: i.billingQuantity + 1 } : i
       ));
     } else {
@@ -118,7 +118,7 @@ export default function SellPage() {
 
     await db.transaction('rw', [db.invoices, db.invoiceItems, db.stockMovements, db.items, db.syncQueue], async () => {
       await db.invoices.add(invoice);
-      
+
       for (const invItem of invoiceItemsData) {
         await db.invoiceItems.add(invItem);
 
@@ -194,9 +194,11 @@ export default function SellPage() {
               <ArrowLeft className="w-6 h-6" />
             </Button>
           </Link>
-          <div className="flex-1">
-            <h1 className="text-xl font-bold font-heading">New Sale</h1>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{shopName}</p>
+          <div className="flex items-center gap-3">
+            <div>
+              <h1 className="text-xl font-bold font-heading">New Sale</h1>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{shopName}</p>
+            </div>
           </div>
         </div>
 
@@ -204,7 +206,7 @@ export default function SellPage() {
         <div className="relative mb-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-            <Input 
+            <Input
               className="pl-10 h-14 glass border-border rounded-xl focus:border-primary focus:ring-1 focus:ring-primary text-lg"
               placeholder="Search items or scan barcode..."
               value={searchTerm}
@@ -217,8 +219,8 @@ export default function SellPage() {
           {searchTerm && (
             <GlassCard className="absolute top-full left-0 right-0 z-50 mt-2 p-2 max-h-80 overflow-y-auto overflow-x-hidden shadow-2xl border-white/10">
               {searchResults?.map((item, index) => (
-                <div 
-                  key={item.id} 
+                <div
+                  key={item.id}
                   className={`flex justify-between items-center p-4 rounded-xl cursor-pointer transition-colors ${index === selectedIndex ? 'bg-primary/20 shadow-md border border-primary/30' : 'hover:bg-primary/10'}`}
                   onClick={() => addToBill(item)}
                 >
@@ -258,7 +260,7 @@ export default function SellPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div className="relative">
             <User className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-            <Input 
+            <Input
               className="pl-10 glass border-white/5 rounded-xl h-11"
               placeholder="Customer Phone (Optional)"
               value={customerPhone}
@@ -267,7 +269,7 @@ export default function SellPage() {
           </div>
           <div className="relative">
             <MessageCircle className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-            <Input 
+            <Input
               className="pl-10 glass border-white/5 rounded-xl h-11"
               placeholder="Customer Email (Optional)"
               value={customerEmail}
@@ -292,14 +294,14 @@ export default function SellPage() {
                 </div>
                 <div className="flex items-center space-x-3">
                   <div className="flex items-center bg-white/5 rounded-xl border border-white/5 overflow-hidden">
-                    <button 
+                    <button
                       className="p-3 hover:bg-white/10 transition-colors"
                       onClick={() => setBillItems(billItems.map(i => i.id === item.id ? { ...i, billingQuantity: Math.max(1, i.billingQuantity - 1) } : i))}
                     >
                       <Minus className="w-4 h-4" />
                     </button>
                     <span className="w-10 text-center font-bold text-lg">{item.billingQuantity}</span>
-                    <button 
+                    <button
                       className="p-3 hover:bg-white/10 transition-colors"
                       onClick={() => {
                         if (item.billingQuantity >= item.stockQuantity) {
@@ -326,15 +328,15 @@ export default function SellPage() {
           <div className="fixed bottom-0 left-0 right-0 p-6 z-50">
             <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-background via-background/60 to-transparent -z-10 px-4" />
             <div className="max-w-4xl mx-auto p-2 bg-white dark:bg-slate-900 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.8)] rounded-3xl overflow-hidden flex items-stretch border border-black/10 dark:border-white/10 backdrop-blur-3xl">
-              <Button 
+              <Button
                 type="button"
-                variant="ghost" 
+                variant="ghost"
                 className="px-8 h-auto rounded-2xl text-red-500 dark:text-red-400 hover:!bg-red-50 dark:hover:!bg-red-500/10 font-bold transition-all"
                 onClick={clearBill}
               >
                 Cancel
               </Button>
-              
+
               <div className="flex-1 flex justify-between items-center px-6 py-4">
                 <div className="flex flex-col">
                   <span className="text-[10px] uppercase font-black tracking-[0.2em] text-slate-400 dark:text-slate-500 mb-1">TOTAL BILL</span>
@@ -343,8 +345,8 @@ export default function SellPage() {
                     <span className="text-4xl font-black tracking-tighter">{calculateTotal().toFixed(2)}</span>
                   </div>
                 </div>
-                
-                <Button 
+
+                <Button
                   className="h-16 px-14 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-2xl shadow-xl shadow-blue-600/40 transition-all transform hover:scale-[1.02] active:scale-[0.98] border border-blue-400/20"
                   onClick={handleCheckout}
                 >
@@ -365,7 +367,7 @@ export default function SellPage() {
             </div>
             <h2 className="text-2xl font-bold">Sale Completed!</h2>
             <p className="text-muted-foreground">Invoice #{lastInvoice?.invoiceNumber}</p>
-            <button 
+            <button
               onClick={() => setIsSuccessOpen(false)}
               className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full"
             >
@@ -377,17 +379,17 @@ export default function SellPage() {
               <span className="text-muted-foreground">Total Paid</span>
               <span className="text-2xl font-black">₹{lastInvoice?.totalAmount?.toFixed(2)}</span>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-3">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="h-14 rounded-xl border-white/10 glass font-bold text-lg"
                 onClick={printInvoice}
               >
                 <Printer className="w-5 h-5 mr-2" /> Print
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="h-14 rounded-xl border-white/10 glass font-bold text-lg text-emerald-400"
                 onClick={shareWhatsApp}
               >
@@ -395,14 +397,14 @@ export default function SellPage() {
               </Button>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="h-14 rounded-xl border-white/10 glass font-bold text-lg text-blue-400"
                 onClick={() => toast.info("PDF download starting...")}
               >
                 Download PDF
               </Button>
-              <Button 
+              <Button
                 className="w-full h-14 bg-primary rounded-xl font-bold text-lg"
                 onClick={() => setIsSuccessOpen(false)}
               >
@@ -420,7 +422,7 @@ export default function SellPage() {
             <h1 className="text-4xl font-bold uppercase">{shopName}</h1>
             <p className="text-gray-600">Tax Invoice / Bill of Supply</p>
           </div>
-          
+
           <div className="flex justify-between border-b pb-4 mb-4">
             <div>
               <p className="font-bold text-xl">Invoice: #{lastInvoice.invoiceNumber}</p>
@@ -467,7 +469,7 @@ export default function SellPage() {
 
           <div className="mt-20 text-center text-gray-400 italic">
             <p>Thank you for shopping with us!</p>
-            <p className="text-xs uppercase tracking-widest mt-2">Generated by Elyfast Stocks</p>
+            <p className="text-xs uppercase tracking-widest mt-2">Generated by Elyfast Inventoriess</p>
           </div>
         </div>
       )}

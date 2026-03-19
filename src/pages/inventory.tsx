@@ -191,7 +191,9 @@ export default function InventoryPage() {
               <ArrowLeft className="w-6 h-6" />
             </Button>
           </Link>
-          <h1 className="text-xl font-bold">Inventory</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold">Inventory</h1>
+          </div>
         </div>
         
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>

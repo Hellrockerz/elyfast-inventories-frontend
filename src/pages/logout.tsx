@@ -13,10 +13,10 @@ export default function Logout() {
       try {
         // Clear Firebase session
         await signOut(auth);
-        
+
         // Clear local storage
         localStorage.clear();
-        
+
         // Short delay for visual feedback
         setTimeout(() => {
           router.push('/');
@@ -40,7 +40,7 @@ export default function Logout() {
           <h1 className="text-2xl font-bold">Signing Out</h1>
           <p className="text-muted-foreground">Cleaning up your session...</p>
         </div>
-        <p className="text-xs text-muted-foreground uppercase tracking-widest">Elyfast Stock</p>
+        <p className="text-xs text-muted-foreground uppercase tracking-widest">Elyfast Inventories</p>
       </GlassCard>
     </div>
   );

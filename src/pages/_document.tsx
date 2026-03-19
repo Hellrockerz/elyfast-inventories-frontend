@@ -12,6 +12,8 @@ export default function Document() {
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Elyfast" />
         <link rel="apple-touch-icon" href="/icons/minimal-modern-app-icon-180.png" />
+        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
       </Head>
       <body>
         <Main />

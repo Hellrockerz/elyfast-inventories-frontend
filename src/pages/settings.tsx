@@ -60,11 +60,10 @@ export default function Settings() {
                 <button
                   key={option.value}
                   onClick={() => setTheme(option.value)}
-                  className={`flex flex-col items-center justify-center py-6 transition-all ${
-                    theme === option.value 
-                    ? 'bg-primary/10 text-primary' 
-                    : 'hover:bg-muted/50 text-muted-foreground'
-                  }`}
+                  className={`flex flex-col items-center justify-center py-6 transition-all ${theme === option.value
+                      ? 'bg-primary/10 text-primary'
+                      : 'hover:bg-muted/50 text-muted-foreground'
+                    }`}
                 >
                   <option.icon className="w-6 h-6 mb-2" />
                   <span className="text-sm font-medium">{option.name}</span>
@@ -118,7 +117,7 @@ export default function Settings() {
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-8">
-          Elyfast Stock v1.0.0 • Made with ❤️ for local businesses
+          Elyfast Inventories v1.0.0 • Made with ❤️ for local businesses
         </p>
       </div>
     </div>

@@ -41,7 +41,9 @@ export default function AlertsPage() {
             <ArrowLeft className="w-6 h-6" />
           </Button>
         </Link>
-        <h1 className="text-2xl font-bold">Alerts & Notifications</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold">Alerts & Notifications</h1>
+        </div>
       </div>
 
       {/* Tabs */}

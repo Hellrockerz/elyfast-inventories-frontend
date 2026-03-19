@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { db, type SyncOperation } from '../lib/db';
+import api from '../lib/api';
 
 export function useSync() {
   const [isOnline, setIsOnline] = useState(typeof window !== 'undefined' ? window.navigator.onLine : true);
@@ -33,13 +34,9 @@ export function useSync() {
     try {
       for (const op of pendingOps) {
         // In a real app, this would be a single batch request
-        const response = await fetch('/api/sync', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(op),
-        });
+        const response = await api.post('/sync', op);
 
-        if (response.ok) {
+        if (response.status === 200 || response.status === 201) {
           await db.syncQueue.update(op.id, { status: 'synced' });
         } else {
           console.error('Failed to sync operation:', op.id);

@@ -50,7 +50,9 @@ export default function ReportsPage() {
             <ArrowLeft className="w-6 h-6" />
           </Button>
         </Link>
-        <h1 className="text-2xl font-bold">Sales Report</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold">Sales Report</h1>
+        </div>
       </div>
 
       {/* Stats Overview */}
