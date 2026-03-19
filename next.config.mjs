@@ -3,6 +3,14 @@ import withPWAInit from "@ducanh2912/next-pwa";
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  async rewrites() {
+    return [
+      {
+        source: "/firebase-messaging-sw.js",
+        destination: "/api/firebase-messaging-sw",
+      },
+    ];
+  },
 };
 
 const withPWA = withPWAInit({

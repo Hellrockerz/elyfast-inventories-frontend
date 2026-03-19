@@ -7,17 +7,24 @@ import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { db } from '@/lib/db';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { useSync } from '@/hooks/useSync';
 
 export default function Dashboard() {
   const [userName, setUserName] = useState('Shopkeeper');
   const [shopName, setShopName] = useState('Elyfast Inventories');
+  const [shopId, setShopId] = useState<string | undefined>(undefined);
   const router = useRouter();
+
+  // Initialize sync hook with shopId for reconciliation
+  useSync(shopId);
 
   useEffect(() => {
     const name = localStorage.getItem('ownerName');
     const sName = localStorage.getItem('shopName');
+    const sId = localStorage.getItem('shopId');
     if (name) setUserName(name);
     if (sName) setShopName(sName);
+    if (sId) setShopId(sId);
   }, []);
 
   const todaySales = useLiveQuery(

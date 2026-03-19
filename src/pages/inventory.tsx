@@ -9,6 +9,8 @@ import Link from 'next/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { ItemService } from '@/lib/item-service';
+import { addStockMovement } from '@/lib/stock-service';
 
 export default function InventoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,7 +46,15 @@ export default function InventoryPage() {
   );
 
   const handleAddItem = async () => {
-    if (!newItem.name || !newItem.sellingPrice) return;
+    if (!newItem.name) {
+      toast.error("Item name is required");
+      return;
+    }
+    
+    if (newItem.sellingPrice === undefined || newItem.sellingPrice === null) {
+      toast.error("Selling price is required");
+      return;
+    }
 
     const id = crypto.randomUUID();
     const item: Item = {
@@ -52,55 +62,37 @@ export default function InventoryPage() {
       shopId,
       name: newItem.name,
       sellingPrice: Number(newItem.sellingPrice),
-      purchasePrice: Number(newItem.purchasePrice),
-      stockQuantity: Number(newItem.stockQuantity),
-      lowStockThreshold: Number(newItem.lowStockThreshold),
+      purchasePrice: Number(newItem.purchasePrice || 0),
+      stockQuantity: Number(newItem.stockQuantity || 0),
+      lowStockThreshold: Number(newItem.lowStockThreshold || 5),
       expiryDate: newItem.expiryDate ? new Date(newItem.expiryDate) : undefined,
       batchNumber: newItem.batchNumber || '',
       status: 'active',
     };
 
-    await db.transaction('rw', [db.items, db.syncQueue], async () => {
-      await db.items.add(item);
-      await db.syncQueue.add({
-        id,
-        shopId,
-        deviceId: 'browser-main',
-        operationType: 'create_item',
-        resourceType: 'items',
-        payload: item,
-        status: 'pending',
-        createdAt: Date.now(),
-      });
-    });
-    window.dispatchEvent(new Event('local-data-queued'));
-
-    setIsAddOpen(false);
-    resetForm();
-    toast.success("Item added successfully");
+    try {
+      await ItemService.addItem(item);
+      setIsAddOpen(false);
+      resetForm();
+      toast.success("Item added successfully");
+    } catch (error) {
+      console.error("Failed to add item:", error);
+      toast.error("Failed to save item");
+    }
   };
 
   const handleEditItem = async () => {
     if (!editingItem || !editingItem.name) return;
 
-    await db.transaction('rw', [db.items, db.syncQueue], async () => {
-      await db.items.update(editingItem.id, editingItem);
-      await db.syncQueue.add({
-        id: crypto.randomUUID(),
-        shopId,
-        deviceId: 'browser-main',
-        operationType: 'update_item',
-        resourceType: 'items',
-        payload: editingItem,
-        status: 'pending',
-        createdAt: Date.now(),
-      });
-    });
-    window.dispatchEvent(new Event('local-data-queued'));
-
-    setIsEditOpen(false);
-    setEditingItem(null);
-    toast.success("Item details updated");
+    try {
+      await ItemService.updateItem(editingItem);
+      setIsEditOpen(false);
+      setEditingItem(null);
+      toast.success("Item details updated");
+    } catch (error) {
+      console.error("Failed to update item:", error);
+      toast.error("Failed to update item");
+    }
   };
 
   const handleDeleteItem = async (id: string, name: string) => {
@@ -109,21 +101,13 @@ export default function InventoryPage() {
       action: {
         label: "Confirm",
         onClick: async () => {
-          await db.transaction('rw', [db.items, db.syncQueue], async () => {
-            await db.items.update(id, { status: 'deleted' });
-            await db.syncQueue.add({
-              id: crypto.randomUUID(),
-              shopId,
-              deviceId: 'browser-main',
-              operationType: 'delete_item',
-              resourceType: 'items',
-              payload: { id },
-              status: 'pending',
-              createdAt: Date.now(),
-            });
-          });
-          window.dispatchEvent(new Event('local-data-queued'));
-          toast.success("Item deleted");
+          try {
+            await ItemService.deleteItem(id, shopId);
+            toast.success("Item deleted");
+          } catch (error) {
+            console.error("Failed to delete item:", error);
+            toast.error("Failed to delete item");
+          }
         }
       }
     });
@@ -133,40 +117,15 @@ export default function InventoryPage() {
     const { itemId, quantity } = stockAdjustment;
     if (!itemId || !quantity) return;
 
-    await db.transaction('rw', [db.items, db.stockMovements, db.syncQueue], async () => {
-      const item = await db.items.get(itemId);
-      if (item) {
-        const newQty = item.stockQuantity + Number(quantity);
-        await db.items.update(itemId, { stockQuantity: newQty });
-        
-        const movementId = crypto.randomUUID();
-        const movement = {
-          id: movementId,
-          shopId,
-          itemId,
-          quantityChange: Number(quantity),
-          reason: 'restock',
-          createdAt: new Date(),
-        };
-        await db.stockMovements.add(movement);
-
-        await db.syncQueue.add({
-          id: movementId,
-          shopId,
-          deviceId: 'browser-main',
-          operationType: 'update_stock',
-          resourceType: 'stock_movements',
-          payload: movement,
-          status: 'pending',
-          createdAt: Date.now(),
-        });
-      }
-    });
-    window.dispatchEvent(new Event('local-data-queued'));
-
-    setIsStockOpen(false);
-    setStockAdjustment({ itemId: '', quantity: 1, itemName: '' });
-    toast.success("Stock quantity updated");
+    try {
+      await addStockMovement(shopId, itemId, Number(quantity), 'restock');
+      setIsStockOpen(false);
+      setStockAdjustment({ itemId: '', quantity: 1, itemName: '' });
+      toast.success("Stock quantity updated");
+    } catch (error) {
+      console.error("Failed to update stock:", error);
+      toast.error("Failed to update stock");
+    }
   };
 
   const resetForm = () => {
@@ -201,13 +160,13 @@ export default function InventoryPage() {
         </div>
         
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-        <DialogTrigger
-          render={
-            <Button className="bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg shadow-blue-500/20" />
-          }
-        >
-          <Plus className="w-5 h-5 mr-2" /> Add Item
-        </DialogTrigger>
+          <DialogTrigger
+            render={
+              <Button className="bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg shadow-blue-500/20">
+                <Plus className="w-5 h-5 mr-2" /> Add Item
+              </Button>
+            }
+          />
           <DialogContent className="glass border-border text-foreground backdrop-blur-3xl shadow-2xl max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold">Add New Item</DialogTitle>
@@ -380,62 +339,77 @@ export default function InventoryPage() {
 
       {/* Items List */}
       <div className="space-y-3 pb-20">
-        {items?.map(item => (
-          <GlassCard key={item.id} className="p-4 flex justify-between items-center transition-all hover:bg-white/5">
-            <div>
-              <div className="flex items-center gap-2">
-                <p className="font-bold text-lg">{item.name}</p>
-                {item.stockQuantity <= item.lowStockThreshold && (
-                  <AlertTriangle className="w-4 h-4 text-orange-400 animate-pulse" />
-                )}
-              </div>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground mt-1">
-                <span className="text-blue-400 font-bold">₹{item.sellingPrice}</span>
-                <span className="opacity-30">|</span>
-                <span className={item.stockQuantity <= item.lowStockThreshold ? 'text-orange-400 font-medium' : ''}>
-                  Stock: <span className="font-bold">{item.stockQuantity}</span>
-                </span>
-                {item.expiryDate && (
-                  <>
-                    <span className="opacity-30">|</span>
-                    <span className="flex items-center gap-1 text-[11px] uppercase tracking-wider">
-                      <Calendar className="w-3 h-3" /> Exp: {new Date(item.expiryDate).toLocaleDateString()}
+        {items?.map((item) => (
+          <GlassCard key={item.id} className="p-4 border-white/5 hover:bg-white/5 transition-colors group">
+            <div className="flex justify-between items-start">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <h3 className="text-lg font-bold truncate group-hover:text-blue-400 transition-colors">
+                    {item.name}
+                  </h3>
+                  {item.serverId ? (
+                    <span className="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-400 text-[10px] font-black border border-blue-500/20">
+                      #{item.serverId}
                     </span>
-                  </>
-                )}
+                  ) : (
+                    <span className="px-2 py-0.5 rounded-md bg-orange-500/10 text-orange-400 text-[10px] font-black border border-orange-500/20 animate-pulse">
+                      SYNC PENDING
+                    </span>
+                  )}
+                  {item.stockQuantity <= item.lowStockThreshold && (
+                    <span className="bg-red-500/10 text-red-400 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center">
+                      <AlertTriangle className="w-3 h-3 mr-1" /> LOW STOCK
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground mt-1">
+                  <span className="text-blue-400 font-bold">₹{item.sellingPrice}</span>
+                  <span className="opacity-30">|</span>
+                  <span className={item.stockQuantity <= item.lowStockThreshold ? 'text-orange-400 font-medium' : ''}>
+                    Stock: <span className="font-bold">{item.stockQuantity}</span>
+                  </span>
+                  {item.expiryDate && (
+                    <>
+                      <span className="opacity-30">|</span>
+                      <span className="flex items-center gap-1 text-[11px] uppercase tracking-wider">
+                        <Calendar className="w-3 h-3" /> Exp: {new Date(item.expiryDate).toLocaleDateString()}
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button 
-                variant="outline" 
-                size="icon" 
-                className="glass border-white/10 text-green-400 hover:text-green-300 h-9 w-9 rounded-lg"
-                onClick={() => {
-                  setStockAdjustment({ itemId: item.id, quantity: 1, itemName: item.name });
-                  setIsStockOpen(true);
-                }}
-              >
-                <PackagePlus className="w-5 h-5" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="text-slate-400 hover:text-white h-9 w-9"
-                onClick={() => {
-                  setEditingItem(item);
-                  setIsEditOpen(true);
-                }}
-              >
-                <Edit2 className="w-4 h-4" />
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="text-red-400/50 hover:text-red-400 h-9 w-9"
-                onClick={() => handleDeleteItem(item.id, item.name)}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
+              <div className="flex items-center space-x-2 ml-4">
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="glass border-white/10 text-green-400 hover:text-green-300 h-9 w-9 rounded-lg"
+                  onClick={() => {
+                    setStockAdjustment({ itemId: item.id, quantity: 1, itemName: item.name });
+                    setIsStockOpen(true);
+                  }}
+                >
+                  <PackagePlus className="w-5 h-5" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="text-slate-400 hover:text-white h-9 w-9"
+                  onClick={() => {
+                    setEditingItem(item);
+                    setIsEditOpen(true);
+                  }}
+                >
+                  <Edit2 className="w-4 h-4" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="text-red-400/50 hover:text-red-400 h-9 w-9"
+                  onClick={() => handleDeleteItem(item.id, item.name)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </GlassCard>
         ))}

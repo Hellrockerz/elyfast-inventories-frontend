@@ -2,6 +2,7 @@ import Dexie, { type Table } from 'dexie';
 
 export interface Shop {
   id: string;
+  serverId?: number;
   name: string;
   businessType: string;
   ownerId: string;
@@ -10,6 +11,7 @@ export interface Shop {
 
 export interface Item {
   id: string;
+  serverId?: number;
   shopId: string;
   name: string;
   sku?: string;
@@ -25,6 +27,7 @@ export interface Item {
 
 export interface Invoice {
   id: string;
+  serverId?: number;
   shopId: string;
   invoiceNumber: string;
   customerName?: string;
@@ -39,6 +42,7 @@ export interface Invoice {
 
 export interface InvoiceItem {
   id: string;
+  serverId?: number;
   invoiceId: string;
   itemId: string;
   itemName: string;
@@ -49,6 +53,7 @@ export interface InvoiceItem {
 
 export interface StockMovement {
   id: string;
+  serverId?: number;
   shopId: string;
   itemId: string;
   quantityChange: number;
@@ -78,12 +83,12 @@ export class MyDatabase extends Dexie {
 
   constructor() {
     super('ElyfastStockDB');
-    this.version(1).stores({
-      shops: 'id, ownerId, status',
-      items: 'id, shopId, name, barcode, expiryDate, status',
-      invoices: 'id, shopId, invoiceNumber, status, createdAt',
-      invoiceItems: 'id, invoiceId, itemId',
-      stockMovements: 'id, shopId, itemId, createdAt',
+    this.version(2).stores({
+      shops: 'id, serverId, ownerId, status',
+      items: 'id, serverId, shopId, name, barcode, expiryDate, status',
+      invoices: 'id, serverId, shopId, invoiceNumber, status, createdAt',
+      invoiceItems: 'id, serverId, invoiceId, itemId',
+      stockMovements: 'id, serverId, shopId, itemId, createdAt',
       syncQueue: 'id, shopId, status, createdAt'
     });
   }

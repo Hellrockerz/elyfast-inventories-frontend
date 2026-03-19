@@ -1,4 +1,5 @@
 import { db, type StockMovement, type SyncOperation } from "../lib/db";
+import { SyncManager } from "./sync-manager";
 
 export async function addStockMovement(
   shopId: string,
@@ -42,10 +43,14 @@ export async function addStockMovement(
       });
     }
 
-    // 3. Queue for sync
+    // 3. Queue for sync (Durability)
     await db.syncQueue.add(syncOp);
   });
 
-  // Notify the sync hook that new data is ready to be pushed
+  // 4. IMMEDIATE SYNC (Durability-First)
+  // Try to sync now, if it fails, the background sync will handle it via the queue
+  await SyncManager.syncSingle(syncOp);
+
+  // Notify components that data has changed (still useful for UI to refresh)
   window.dispatchEvent(new Event('local-data-queued'));
 }

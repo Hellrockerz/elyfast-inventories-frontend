@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { db } from '../lib/db';
-import api from '../lib/api';
+import { SyncManager } from '../lib/sync-manager';
 
-export function useSync() {
+export function useSync(shopId?: string) {
   const [isOnline, setIsOnline] = useState(typeof window !== 'undefined' ? window.navigator.onLine : true);
   const [isSyncing, setIsSyncing] = useState(false);
   const isSyncingRef = useRef(false);
@@ -23,25 +22,13 @@ export function useSync() {
   const sync = useCallback(async () => {
     if (!isOnline || isSyncingRef.current) return;
 
-    const pendingOps = await db.syncQueue
-      .where('status')
-      .equals('pending')
-      .toArray();
-
-    if (pendingOps.length === 0) return;
-
     isSyncingRef.current = true;
     setIsSyncing(true);
 
     try {
-      for (const op of pendingOps) {
-        const response = await api.post('/sync', op);
-
-        if (response.status === 200 || response.status === 201) {
-          await db.syncQueue.update(op.id, { status: 'synced' });
-        } else {
-          console.error('Failed to sync operation:', op.id);
-        }
+      await SyncManager.processQueue();
+      if (shopId) {
+        await SyncManager.reconcileState(shopId);
       }
     } catch (error) {
       console.error('Sync error:', error);
@@ -49,7 +36,7 @@ export function useSync() {
       isSyncingRef.current = false;
       setIsSyncing(false);
     }
-  }, [isOnline]);
+  }, [isOnline, shopId]);
 
   // Auto-sync when coming back online
   useEffect(() => {

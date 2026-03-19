@@ -1,5 +1,5 @@
 import { useState, useEffect, type ChangeEvent } from 'react';
-import { db, type Item } from '@/lib/db';
+import { db, type Item, type Invoice, type InvoiceItem } from '@/lib/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { GlassCard } from '@/components/GlassCard';
 import { Input } from '@/components/ui/input';
@@ -8,6 +8,7 @@ import { Search, Plus, Minus, Trash2, ArrowLeft, Check, ShoppingCart, Printer, M
 import Link from 'next/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { InvoiceService } from '@/lib/invoice-service';
 
 interface BillItem extends Item {
   billingQuantity: number;
@@ -92,12 +93,11 @@ export default function SellPage() {
     const invoiceId = crypto.randomUUID();
     const invoiceNumber = `INV-${Date.now().toString().slice(-6)}`;
 
-    const invoice = {
+    const invoice: Invoice = {
       id: invoiceId,
       shopId,
       invoiceNumber,
       customerPhone: customerPhone || undefined,
-      customerEmail: customerEmail || undefined,
       totalAmount: calculateTotal(),
       discountAmount: 0,
       taxAmount: 0,
@@ -106,7 +106,7 @@ export default function SellPage() {
       status: 'active',
     };
 
-    const invoiceItemsData = billItems.map(item => ({
+    const invoiceItemsData: InvoiceItem[] = billItems.map(item => ({
       id: crypto.randomUUID(),
       invoiceId,
       itemId: item.id,
@@ -116,51 +116,18 @@ export default function SellPage() {
       totalPrice: item.sellingPrice * item.billingQuantity,
     }));
 
-    await db.transaction('rw', [db.invoices, db.invoiceItems, db.stockMovements, db.items, db.syncQueue], async () => {
-      await db.invoices.add(invoice);
-
-      for (const invItem of invoiceItemsData) {
-        await db.invoiceItems.add(invItem);
-
-        // Record stock movement
-        await db.stockMovements.add({
-          id: crypto.randomUUID(),
-          shopId,
-          itemId: invItem.itemId,
-          quantityChange: -invItem.quantity,
-          reason: 'sale',
-          referenceId: invoiceId,
-          createdAt: new Date(),
-        });
-
-        // Update local items table
-        const localItem = await db.items.get(invItem.itemId);
-        if (localItem) {
-          await db.items.update(invItem.itemId, {
-            stockQuantity: localItem.stockQuantity - invItem.quantity
-          });
-        }
-      }
-
-      // Sync op
-      await db.syncQueue.add({
-        id: invoiceId,
-        shopId,
-        deviceId: 'browser-main',
-        operationType: 'create_invoice',
-        resourceType: 'invoices',
-        payload: { invoice, items: invoiceItemsData },
-        status: 'pending',
-        createdAt: Date.now(),
-      });
-    });
-    window.dispatchEvent(new Event('local-data-queued'));
-
-    setLastInvoice({ ...invoice, items: invoiceItemsData });
-    setIsSuccessOpen(true);
-    setBillItems([]);
-    setCustomerPhone('');
-    setCustomerEmail('');
+    try {
+      await InvoiceService.createInvoice(invoice, invoiceItemsData);
+      setLastInvoice({ ...invoice, items: invoiceItemsData });
+      setIsSuccessOpen(true);
+      setBillItems([]);
+      setCustomerPhone('');
+      setCustomerEmail('');
+      toast.success("Sale completed successfully");
+    } catch (error) {
+      console.error("Failed to complete sale:", error);
+      toast.error("Failed to save invoice");
+    }
   };
 
   const clearBill = () => {
