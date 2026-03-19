@@ -3,13 +3,15 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { GlassCard } from '@/components/GlassCard';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Moon, Sun, Monitor, LogOut, Shield, Bell, User } from 'lucide-react';
+import { ArrowLeft, Moon, Sun, Monitor, LogOut, Shield, Bell, User, Download } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { usePWA } from '@/hooks/usePWA';
 
 export default function Settings() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [userName, setUserName] = useState('Shopkeeper');
+  const { isInstallable, installApp } = usePWA();
   const router = useRouter();
 
   useEffect(() => {
@@ -103,6 +105,21 @@ export default function Settings() {
               </div>
               <ArrowLeft className="w-4 h-4 rotate-180 text-muted-foreground" />
             </button>
+            {isInstallable && (
+              <button 
+                onClick={installApp}
+                className="w-full px-6 py-4 flex items-center justify-between bg-blue-500/10 hover:bg-blue-500/20 transition-all group"
+              >
+                <div className="flex items-center space-x-3">
+                  <Download className="w-5 h-5 text-blue-500 animate-bounce" />
+                  <div className="text-left">
+                    <span className="font-bold text-blue-500 block">Install Elyfast App</span>
+                    <span className="text-[10px] text-blue-400 capitalize">Fast access from your home screen</span>
+                  </div>
+                </div>
+                <ArrowLeft className="w-4 h-4 rotate-180 text-blue-400 group-hover:translate-x-1 transition-transform" />
+              </button>
+            )}
           </GlassCard>
         </div>
 
