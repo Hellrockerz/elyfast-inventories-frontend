@@ -58,6 +58,7 @@ export function useSync() {
     if (isOnline) {
       sync();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOnline]);
 
   return { isOnline, isSyncing, sync };

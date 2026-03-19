@@ -1,20 +1,27 @@
 {
-  "name": "Elyfast Stock",
+  "name": "Elyfast Stock POS",
   "short_name": "Elyfast",
-  "description": "Fast billing and inventory for small businesses.",
-  "start_url": "/",
+  "description": "Premium POS and Inventory Management App",
+  "id": "/",
+  "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#3b82f6",
+  "background_color": "#0ea5e9",
+  "theme_color": "#0f172a",
   "icons": [
     {
-      "src": "/icons/icon-192x192.png",
+      "src": "/icons/minimal-modern-app-icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/icons/icon-512x512.png",
+      "src": "/icons/minimal-modern-app-icon-1024.png",
       "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/minimal-modern-app-icon-1024.png",
+      "sizes": "1024x1024",
       "type": "image/png"
     }
   ]

@@ -189,6 +189,7 @@ export default function LoginPage() {
                   onClick={handleGoogleLogin}
                   className="w-full bg-white text-slate-900 hover:bg-slate-100 h-12 rounded-xl font-bold flex items-center justify-center space-x-3 shadow-xl transition-all active:scale-95 disabled:opacity-50"
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src="https://www.google.com/favicon.ico" className="w-4 h-4" alt="Google" />
                   <span>{loading ? 'Authenticating...' : 'Continue with Google'}</span>
                 </Button>

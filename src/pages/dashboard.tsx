@@ -108,7 +108,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 gap-4 mb-10">
         <Link href="/reports" className="block">
           <GlassCard className="p-5 border-blue-500/10 bg-blue-500/5 hover:bg-blue-500/10 transition-colors cursor-pointer group">
-            <p className="text-[10px] uppercase font-bold tracking-widest text-blue-400 mb-1">Today's Revenue</p>
+            <p className="text-[10px] uppercase font-bold tracking-widest text-blue-400 mb-1">Today&apos;s Revenue</p>
             <p className="text-3xl font-black flex items-center">
               <IndianRupee className="w-5 h-5 mr-1 text-blue-500/50" />
               {(todaySales?.total ?? 0).toFixed(2)}

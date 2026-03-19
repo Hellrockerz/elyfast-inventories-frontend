@@ -57,7 +57,7 @@ export default function ReportsPage() {
       <div className="grid grid-cols-2 gap-4 mb-8">
         <GlassCard className="p-6 border-blue-500/20 bg-blue-600/5 relative overflow-hidden group">
           <TrendingUp className="absolute right-2 bottom-2 w-20 h-20 text-blue-500/30 group-hover:scale-110 transition-transform" />
-          <p className="text-xs text-blue-400 uppercase font-bold tracking-widest mb-1">Today's Sales</p>
+          <p className="text-xs text-blue-400 uppercase font-bold tracking-widest mb-1">Today&apos;s Sales</p>
           <p className="text-3xl font-black flex items-center relative z-10">
             <IndianRupee className="w-6 h-6 mr-1 text-blue-400" />
             {todaySales?.total.toFixed(2) || '0.00'}
