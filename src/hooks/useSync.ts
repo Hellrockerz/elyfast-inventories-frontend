@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
-import { db, type SyncOperation } from '../lib/db';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { db } from '../lib/db';
 import api from '../lib/api';
 
 export function useSync() {
   const [isOnline, setIsOnline] = useState(typeof window !== 'undefined' ? window.navigator.onLine : true);
   const [isSyncing, setIsSyncing] = useState(false);
+  const isSyncingRef = useRef(false);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -19,9 +20,9 @@ export function useSync() {
     };
   }, []);
 
-  const sync = async () => {
-    if (!isOnline || isSyncing) return;
-    
+  const sync = useCallback(async () => {
+    if (!isOnline || isSyncingRef.current) return;
+
     const pendingOps = await db.syncQueue
       .where('status')
       .equals('pending')
@@ -29,34 +30,45 @@ export function useSync() {
 
     if (pendingOps.length === 0) return;
 
+    isSyncingRef.current = true;
     setIsSyncing(true);
-    
+
     try {
       for (const op of pendingOps) {
-        // In a real app, this would be a single batch request
         const response = await api.post('/sync', op);
 
         if (response.status === 200 || response.status === 201) {
           await db.syncQueue.update(op.id, { status: 'synced' });
         } else {
           console.error('Failed to sync operation:', op.id);
-          // Optional: handle retry logic or mark as failed
         }
       }
     } catch (error) {
       console.error('Sync error:', error);
     } finally {
+      isSyncingRef.current = false;
       setIsSyncing(false);
     }
-  };
+  }, [isOnline]);
 
-  // Auto-sync when coming online
+  // Auto-sync when coming back online
   useEffect(() => {
     if (isOnline) {
       sync();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOnline]);
+  }, [isOnline, sync]);
+
+  // Immediately sync when a new operation is queued locally
+  useEffect(() => {
+    const handleQueueUpdate = () => {
+      if (isOnline) sync();
+    };
+
+    window.addEventListener('local-data-queued', handleQueueUpdate);
+    return () => {
+      window.removeEventListener('local-data-queued', handleQueueUpdate);
+    };
+  }, [isOnline, sync]);
 
   return { isOnline, isSyncing, sync };
 }

@@ -73,6 +73,7 @@ export default function InventoryPage() {
         createdAt: Date.now(),
       });
     });
+    window.dispatchEvent(new Event('local-data-queued'));
 
     setIsAddOpen(false);
     resetForm();
@@ -95,6 +96,7 @@ export default function InventoryPage() {
         createdAt: Date.now(),
       });
     });
+    window.dispatchEvent(new Event('local-data-queued'));
 
     setIsEditOpen(false);
     setEditingItem(null);
@@ -120,6 +122,7 @@ export default function InventoryPage() {
               createdAt: Date.now(),
             });
           });
+          window.dispatchEvent(new Event('local-data-queued'));
           toast.success("Item deleted");
         }
       }
@@ -159,6 +162,7 @@ export default function InventoryPage() {
         });
       }
     });
+    window.dispatchEvent(new Event('local-data-queued'));
 
     setIsStockOpen(false);
     setStockAdjustment({ itemId: '', quantity: 1, itemName: '' });

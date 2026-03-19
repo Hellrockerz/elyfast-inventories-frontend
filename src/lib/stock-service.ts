@@ -45,4 +45,7 @@ export async function addStockMovement(
     // 3. Queue for sync
     await db.syncQueue.add(syncOp);
   });
+
+  // Notify the sync hook that new data is ready to be pushed
+  window.dispatchEvent(new Event('local-data-queued'));
 }

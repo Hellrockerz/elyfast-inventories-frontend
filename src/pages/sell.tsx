@@ -154,6 +154,7 @@ export default function SellPage() {
         createdAt: Date.now(),
       });
     });
+    window.dispatchEvent(new Event('local-data-queued'));
 
     setLastInvoice({ ...invoice, items: invoiceItemsData });
     setIsSuccessOpen(true);
