@@ -139,6 +139,7 @@ export default function LandingPage() {
                 className="relative overflow-hidden rounded-[1.5rem] aspect-video flex items-center justify-center bg-slate-100 dark:bg-slate-900 cursor-pointer group/preview"
               >
                 {mounted && (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img 
                     src={theme === 'dark' 
                       ? "/dashboard-preview-dark.png" 
