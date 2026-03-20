@@ -81,8 +81,8 @@ export class MyDatabase extends Dexie {
   stockMovements!: Table<StockMovement>;
   syncQueue!: Table<SyncOperation>;
 
-  constructor() {
-    super('ElyfastStockDB');
+  constructor(dbName: string = 'ElyfastStockDB', options?: any) {
+    super(dbName, options);
     this.version(2).stores({
       shops: 'id, serverId, ownerId, status',
       items: 'id, serverId, shopId, name, barcode, expiryDate, status',
@@ -94,4 +94,20 @@ export class MyDatabase extends Dexie {
   }
 }
 
-export const db = new MyDatabase();
+// Ensure the db switches globally based on local storage when the module is evaluated (Client Side)
+const isPreviewMode = typeof window !== 'undefined' && localStorage.getItem('elyfast_preview_mode') === 'true';
+
+let dexieOptions: any = undefined;
+if (isPreviewMode) {
+  try {
+    const fakeIndexedDB = require('fake-indexeddb');
+    dexieOptions = {
+      indexedDB: fakeIndexedDB.indexedDB,
+      IDBKeyRange: fakeIndexedDB.IDBKeyRange,
+    };
+  } catch (e) {
+    console.warn('Failed to load fake-indexeddb for preview mode', e);
+  }
+}
+
+export const db = new MyDatabase(isPreviewMode ? 'ElyfastPreviewDB' : 'ElyfastStockDB', dexieOptions);

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { SyncManager } from '../lib/sync-manager';
+import { isPreviewModeActive } from '../lib/preview-mode';
 
 export function useSync(shopId?: string) {
   const [isOnline, setIsOnline] = useState(typeof window !== 'undefined' ? window.navigator.onLine : true);
@@ -20,7 +21,7 @@ export function useSync(shopId?: string) {
   }, []);
 
   const sync = useCallback(async () => {
-    if (!isOnline || isSyncingRef.current) return;
+    if (!isOnline || isSyncingRef.current || isPreviewModeActive()) return;
 
     isSyncingRef.current = true;
     setIsSyncing(true);

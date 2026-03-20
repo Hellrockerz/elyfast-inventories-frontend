@@ -185,7 +185,7 @@ export default function SellPage() {
 
           {/* Search Results */}
           {searchTerm && (
-            <GlassCard className="absolute top-full left-0 right-0 z-50 mt-2 p-2 max-h-80 overflow-y-auto overflow-x-hidden shadow-2xl border-white/10">
+            <GlassCard className="absolute top-full left-0 right-0 z-50 mt-2 p-2 max-h-80 overflow-y-auto overflow-x-hidden shadow-2xl border border-black/10 dark:border-white/10 bg-white/95 dark:bg-slate-950/95 backdrop-blur-3xl">
               {searchResults?.map((item, index) => (
                 <div
                   key={item.id}

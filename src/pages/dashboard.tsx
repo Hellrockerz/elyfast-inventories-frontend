@@ -8,6 +8,7 @@ import { signOut } from 'firebase/auth';
 import { db } from '@/lib/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useSync } from '@/hooks/useSync';
+import { DashboardCharts } from '@/components/DashboardCharts';
 
 export default function Dashboard() {
   const [userName, setUserName] = useState('Shopkeeper');
@@ -153,6 +154,8 @@ export default function Dashboard() {
           </Link>
         ))}
       </div>
+
+      <DashboardCharts />
 
       {/* Sync Status Overlay */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
