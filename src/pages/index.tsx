@@ -13,10 +13,7 @@ import {
   getToken
 } from '@/lib/firebase';
 import {
-  signInWithPopup,
-  RecaptchaVerifier,
-  signInWithPhoneNumber,
-  ConfirmationResult
+  signInWithPopup
 } from 'firebase/auth';
 import api from '@/lib/api';
 import { toast } from 'sonner';
@@ -25,10 +22,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
   const [ownerId, setOwnerId] = useState<string | null>(null);
-  const [phoneMode, setPhoneMode] = useState(false);
-  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
-  const [otp, setOtp] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -57,13 +50,6 @@ export default function LoginPage() {
     }
   };
 
-  const setupRecaptcha = () => {
-    if ((window as any).recaptchaVerifier) return;
-    (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-      'size': 'invisible'
-    });
-  };
-
   const handleGoogleLogin = async () => {
     setLoading(true);
     const provider = new GoogleAuthProvider();
@@ -72,34 +58,6 @@ export default function LoginPage() {
       await handleAuthSuccess(result.user.uid);
     } catch (err) {
       console.error("Google login failed", err);
-      setLoading(false);
-    }
-  };
-
-  const handlePhoneSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setupRecaptcha();
-    const verifier = (window as any).recaptchaVerifier;
-    try {
-      const result = await signInWithPhoneNumber(auth, phoneNumber, verifier);
-      setConfirmationResult(result);
-    } catch (err) {
-      console.error("Phone login failed", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!confirmationResult) return;
-    setLoading(true);
-    try {
-      const result = await confirmationResult.confirm(otp);
-      await handleAuthSuccess(result.user.uid);
-    } catch (err) {
-      console.error("OTP verification failed", err);
       setLoading(false);
     }
   };
@@ -157,8 +115,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-transparent text-foreground flex items-center justify-center p-6 relative overflow-hidden">
-      {/* Recaptcha Container */}
-      <div id="recaptcha-container"></div>
 
       {/* Background Blobs */}
       <div className="absolute top-[10%] -left-20 w-80 h-80 bg-blue-600/10 dark:bg-blue-600/20 rounded-full blur-[120px] -z-10 animate-pulse" />
@@ -182,75 +138,17 @@ export default function LoginPage() {
 
         {!showRegister ? (
           <div className="space-y-6">
-            {!phoneMode ? (
-              <div className="space-y-4">
-                <Button
-                  disabled={loading}
-                  onClick={handleGoogleLogin}
-                  className="w-full bg-white text-slate-900 hover:bg-slate-100 h-12 rounded-xl font-bold flex items-center justify-center space-x-3 shadow-xl transition-all active:scale-95 disabled:opacity-50"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="https://www.google.com/favicon.ico" className="w-4 h-4" alt="Google" />
-                  <span>{loading ? 'Authenticating...' : 'Continue with Google'}</span>
-                </Button>
-                <Button
-                  disabled={loading}
-                  onClick={() => setPhoneMode(true)}
-                  className="w-full bg-slate-800 border border-white/10 text-white hover:bg-slate-700 h-12 rounded-xl font-bold flex items-center justify-center space-x-3 transition-all active:scale-95 disabled:opacity-50"
-                >
-                  <Smartphone className="w-5 h-5" />
-                  <span>Continue with Phone</span>
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {!confirmationResult ? (
-                  <form onSubmit={handlePhoneSubmit} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>Phone Number</Label>
-                      <div className="relative">
-                        <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
-                        <Input
-                          placeholder="+91 99999 99999"
-                          value={phoneNumber}
-                          onChange={(e) => setPhoneNumber(e.target.value)}
-                          className="pl-10 h-12 bg-white/5 border-white/10 rounded-xl focus:border-blue-500"
-                          type="tel"
-                          required
-                        />
-                      </div>
-                    </div>
-                    <Button type="submit" disabled={loading} className="w-full bg-blue-600 h-12 rounded-xl font-bold text-lg shadow-xl shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50">
-                      {loading ? 'Sending OTP...' : 'Get OTP'}
-                    </Button>
-                  </form>
-                ) : (
-                  <form onSubmit={handleVerifyOtp} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>Enter OTP</Label>
-                      <Input
-                        placeholder="123456"
-                        value={otp}
-                        onChange={(e) => setOtp(e.target.value)}
-                        className="h-12 bg-white/5 border-white/10 rounded-xl focus:border-blue-500 text-center tracking-widest text-xl"
-                        maxLength={6}
-                        required
-                      />
-                    </div>
-                    <Button type="submit" disabled={loading} className="w-full bg-blue-600 h-12 rounded-xl font-bold text-lg shadow-xl shadow-blue-500/20 active:scale-95 transition-all disabled:opacity-50">
-                      {loading ? 'Verifying...' : 'Verify OTP'}
-                    </Button>
-                  </form>
-                )}
-                <button
-                  type="button"
-                  onClick={() => { setPhoneMode(false); setConfirmationResult(null); }}
-                  className="w-full text-muted-foreground text-sm hover:text-foreground py-2"
-                >
-                  ← Other options
-                </button>
-              </div>
-            )}
+            <div className="space-y-4">
+              <Button
+                disabled={loading}
+                onClick={handleGoogleLogin}
+                className="w-full bg-white text-slate-900 hover:bg-slate-100 h-12 rounded-xl font-bold flex items-center justify-center space-x-3 shadow-xl transition-all active:scale-95 disabled:opacity-50"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="https://www.google.com/favicon.ico" className="w-4 h-4" alt="Google" />
+                <span>{loading ? 'Authenticating...' : 'Continue with Google'}</span>
+              </Button>
+            </div>
           </div>
         ) : (
           <form onSubmit={handleRegister} className="space-y-4 max-h-[400px] overflow-y-auto px-1 pr-2">
@@ -274,7 +172,7 @@ export default function LoginPage() {
               <Label>Phone Number</Label>
               <div className="relative">
                 <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-5 h-5" />
-                <Input name="phone" defaultValue={phoneNumber} required placeholder="+91 99999 99999" className="pl-10 h-12 bg-white/5 border-white/10 rounded-xl focus:border-blue-500" />
+                <Input name="phone" required placeholder="+91 99999 99999" className="pl-10 h-12 bg-white/5 border-white/10 rounded-xl focus:border-blue-500" />
               </div>
             </div>
 
