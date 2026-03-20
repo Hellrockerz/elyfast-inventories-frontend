@@ -75,6 +75,16 @@ export default function LoginPage() {
         localStorage.setItem('shopId', data.shopId);
         localStorage.setItem('shopName', data.shopName);
         localStorage.setItem('ownerName', data.ownerName || 'Shopkeeper');
+        // Store subscription info
+        if (data.subscriptionStatus) {
+          localStorage.setItem('subscriptionStatus', data.subscriptionStatus);
+        }
+        if (data.subscriptionValidUntil) {
+          localStorage.setItem('subscriptionValidUntil', data.subscriptionValidUntil);
+        }
+        if (data.trialUsed !== undefined) {
+          localStorage.setItem('trialUsed', String(data.trialUsed));
+        }
         router.push('/dashboard');
       } else {
         setShowRegister(true);

@@ -31,6 +31,15 @@ api.interceptors.response.use(
       // Handle unauthorized (optional: logout user or refresh token)
       console.error('Unauthorized access - potential session expiry');
     }
+    if (error.response?.status === 402) {
+      // Subscription expired - dispatch event for UI to handle
+      console.warn('Subscription expired - write operations blocked');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('subscription-expired', {
+          detail: error.response.data,
+        }));
+      }
+    }
     return Promise.reject(error);
   }
 );

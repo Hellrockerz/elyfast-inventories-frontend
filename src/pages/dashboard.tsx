@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { GlassCard } from '@/components/GlassCard';
-import { ShoppingCart, Package, BarChart2, Settings, LogOut, Bell, IndianRupee, AlertCircle } from 'lucide-react';
+import { ShoppingCart, Package, BarChart2, Settings, LogOut, Bell, IndianRupee, AlertCircle, CreditCard, Shield } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { db } from '@/lib/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useSync } from '@/hooks/useSync';
 import { DashboardCharts } from '@/components/DashboardCharts';
+import { useSubscription } from '@/hooks/useSubscription';
 
 export default function Dashboard() {
   const [userName, setUserName] = useState('Shopkeeper');
@@ -18,6 +19,8 @@ export default function Dashboard() {
 
   // Initialize sync hook with shopId for reconciliation
   useSync(shopId);
+
+  const { subscription, isExpired, isWriteBlocked } = useSubscription();
 
   useEffect(() => {
     const name = localStorage.getItem('ownerName');
@@ -77,6 +80,8 @@ export default function Dashboard() {
     { title: 'Inventory', icon: Package, href: '/inventory', color: 'bg-indigo-600' },
     { title: 'Reports', icon: BarChart2, href: '/reports', color: 'bg-emerald-600' },
     { title: 'Alerts', icon: Bell, href: '/alerts', color: 'bg-orange-600' },
+    { title: 'Billing', icon: CreditCard, href: '/billing', color: 'bg-purple-600' },
+    ...(subscription.isAdmin ? [{ title: 'Admin', icon: Shield, href: '/admin', color: 'bg-rose-600' }] : []),
   ];
 
   return (
