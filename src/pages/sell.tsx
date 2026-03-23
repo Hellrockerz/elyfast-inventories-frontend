@@ -256,8 +256,8 @@ export default function SellPage() {
           ) : (
             billItems.map(item => (
               <GlassCard key={item.id} className="p-4 flex justify-between items-center border-white/5 animate-in slide-in-from-bottom-2 duration-300">
-                <div className="flex-1">
-                  <p className="font-bold text-lg">{item.name}</p>
+                <div className="flex-1 min-w-0 mr-4">
+                  <p className="font-bold text-lg truncate">{item.name}</p>
                   <p className="text-xs text-muted-foreground">₹{item.sellingPrice} per unit</p>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -293,33 +293,45 @@ export default function SellPage() {
 
         {/* Checkout Bar */}
         {billItems.length > 0 && (
-          <div className="fixed bottom-0 left-0 right-0 p-6 z-50">
-            <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-background via-background/60 to-transparent -z-10 px-4" />
-            <div className="max-w-4xl mx-auto p-2 bg-white dark:bg-slate-900 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.8)] rounded-3xl overflow-hidden flex items-stretch border border-black/10 dark:border-white/10 backdrop-blur-3xl">
+          <div className="fixed bottom-0 left-0 right-0 p-3 md:p-6 z-50">
+            <div className="absolute inset-x-0 bottom-0 h-32 md:h-40 bg-gradient-to-t from-background via-background/60 to-transparent -z-10" />
+            <div className="max-w-4xl mx-auto bg-white dark:bg-slate-900 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)] dark:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.8)] rounded-2xl md:rounded-3xl overflow-hidden flex items-center border border-black/10 dark:border-white/10 backdrop-blur-3xl">
               <Button
                 type="button"
                 variant="ghost"
-                className="px-8 h-auto rounded-2xl text-red-500 dark:text-red-400 hover:!bg-red-50 dark:hover:!bg-red-500/10 font-bold transition-all"
+                className="hidden md:flex px-8 h-auto rounded-2xl text-red-500 dark:text-red-400 hover:!bg-red-50 dark:hover:!bg-red-500/10 font-bold transition-all shrink-0"
                 onClick={clearBill}
               >
                 Cancel
               </Button>
 
-              <div className="flex-1 flex justify-between items-center px-6 py-4">
-                <div className="flex flex-col">
-                  <span className="text-[10px] uppercase font-black tracking-[0.2em] text-slate-400 dark:text-slate-500 mb-1">TOTAL BILL</span>
-                  <div className="flex items-baseline text-slate-900 dark:text-white">
-                    <span className="text-xl font-bold text-blue-600 dark:text-blue-500 mr-2">₹</span>
-                    <span className="text-4xl font-black tracking-tighter">{calculateTotal().toFixed(2)}</span>
+              <div className="flex-1 flex justify-between items-center pl-4 pr-1.5 md:px-6 py-2 md:py-4 gap-2">
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[8px] md:text-[10px] uppercase font-black tracking-[0.2em] text-slate-400 dark:text-slate-500 mb-0.5 md:mb-1 truncate">TOTAL BILL</span>
+                  <div className="flex items-baseline text-slate-900 dark:text-white truncate">
+                    <span className="text-sm md:text-xl font-bold text-blue-600 dark:text-blue-500 mr-1 md:mr-2">₹</span>
+                    <span className="text-xl md:text-4xl font-black tracking-tighter truncate">{calculateTotal().toFixed(2)}</span>
                   </div>
                 </div>
 
-                <Button
-                  className="h-16 px-14 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-2xl shadow-xl shadow-blue-600/40 transition-all transform hover:scale-[1.02] active:scale-[0.98] border border-blue-400/20"
-                  onClick={handleCheckout}
-                >
-                  Complete Sale
-                </Button>
+                <div className="flex items-center gap-1.5 md:gap-3 shrink-0">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="md:hidden text-red-500 dark:text-red-400 hover:bg-red-500/10 h-10 w-10"
+                    onClick={clearBill}
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </Button>
+                  <Button
+                    className="h-11 md:h-16 px-4 md:px-14 bg-blue-600 hover:bg-blue-500 text-white rounded-xl md:rounded-2xl font-black text-base md:text-2xl shadow-xl shadow-blue-600/40 transition-all transform hover:scale-[1.02] active:scale-[0.98] border border-blue-400/20"
+                    onClick={handleCheckout}
+                  >
+                    <span className="hidden sm:inline">Complete Sale</span>
+                    <span className="sm:hidden">Checkout</span>
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
