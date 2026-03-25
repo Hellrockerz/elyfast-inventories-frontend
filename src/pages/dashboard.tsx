@@ -5,11 +5,11 @@ import { GlassCard } from '@/components/GlassCard';
 import { ShoppingCart, Package, BarChart2, Settings, LogOut, Bell, IndianRupee, AlertCircle, CreditCard, Shield } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
-import { db } from '@/lib/db';
+import { db } from '@/data/db';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useSync } from '@/hooks/useSync';
 import { DashboardCharts } from '@/components/DashboardCharts';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 
 export default function Dashboard() {
   const [userName, setUserName] = useState('Shopkeeper');
@@ -17,8 +17,7 @@ export default function Dashboard() {
   const [shopId, setShopId] = useState<string | undefined>(undefined);
   const router = useRouter();
 
-  // Initialize sync hook with shopId for reconciliation
-  useSync(shopId);
+  const { isOnline } = useNetworkStatus();
 
   const { subscription, isExpired, isWriteBlocked } = useSubscription();
 
@@ -35,21 +34,21 @@ export default function Dashboard() {
     async () => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const todayInvoices = await db.invoices
+      const todayInvoices = await db.cache_sales
         .where('createdAt')
-        .above(today)
+        .above(today.getTime())
         .toArray();
 
       return {
-        total: todayInvoices.reduce((acc, inv) => acc + inv.totalAmount, 0),
+        total: todayInvoices.reduce((acc: number, inv: any) => acc + inv.totalAmount, 0),
         count: todayInvoices.length
       };
     }
   );
 
   const lowStockCount = useLiveQuery(
-    () => db.items
-      .where('status').notEqual('deleted')
+    () => db.cache_products
+      .filter(item => item.status !== 'deleted')
       .and(item => item.stockQuantity <= item.lowStockThreshold)
       .count()
   );
@@ -58,8 +57,8 @@ export default function Dashboard() {
     async () => {
       const thirtyDaysFromNow = new Date();
       thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-      return await db.items
-        .where('status').notEqual('deleted')
+      return await db.cache_products
+        .filter(item => item.status !== 'deleted')
         .and(item => !!(item.expiryDate && new Date(item.expiryDate) <= thirtyDaysFromNow))
         .count();
     }
@@ -165,8 +164,17 @@ export default function Dashboard() {
       {/* Sync Status Overlay */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
         <div className="px-5 py-2.5 rounded-full glass backdrop-blur-2xl border border-white/10 text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2 shadow-2xl">
-          <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
-          <span>Local Sync Active</span>
+          {isOnline ? (
+            <>
+              <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(52,211,153,0.6)]" />
+              <span>CONNECTED (LIVE SYNC)</span>
+            </>
+          ) : (
+            <>
+              <div className="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(251,146,60,0.6)]" />
+              <span>OFFLINE (LOCAL STORAGE)</span>
+            </>
+          )}
         </div>
       </div>
     </div>

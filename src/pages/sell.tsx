@@ -1,14 +1,27 @@
 import { useState, useEffect, type ChangeEvent } from 'react';
-import { db, type Item, type Invoice, type InvoiceItem } from '@/lib/db';
+import { db } from '@/data/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { GlassCard } from '@/components/GlassCard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, Plus, Minus, Trash2, ArrowLeft, Check, ShoppingCart, Printer, MessageCircle, X, User } from 'lucide-react';
+import { Search, Plus, Minus, Trash2, ArrowLeft, Check, ShoppingCart, Printer, MessageCircle, X, User, Wifi, WifiOff } from 'lucide-react';
 import Link from 'next/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { InvoiceService } from '@/lib/invoice-service';
+import { SalesService } from '@/services/sales.service';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { type Product as Item, type Invoice } from '@/dexie/schema'; 
+
+interface InvoiceItem {
+    id: string;
+    serverId?: number;
+    invoiceId: string;
+    itemId: string;
+    itemName: string;
+    quantity: number;
+    unitPrice: number;
+    totalPrice: number;
+}
 
 interface BillItem extends Item {
   billingQuantity: number;
@@ -24,6 +37,7 @@ export default function SellPage() {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
+  const { isOnline } = useNetworkStatus();
 
   useEffect(() => {
     const sId = localStorage.getItem('shopId');
@@ -36,8 +50,8 @@ export default function SellPage() {
   const searchResults = useLiveQuery(
     async () => {
       if (!searchTerm) return [];
-      const results = await db.items
-        .where('status').notEqual('deleted')
+      const results = await db.cache_products
+        .filter(item => item.status !== 'deleted')
         .and(item =>
           item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           (item.barcode ? item.barcode.includes(searchTerm) : false)
@@ -117,13 +131,13 @@ export default function SellPage() {
     }));
 
     try {
-      await InvoiceService.createInvoice(invoice, invoiceItemsData);
+      await SalesService.createSale({ invoice, items: invoiceItemsData });
       setLastInvoice({ ...invoice, items: invoiceItemsData });
       setIsSuccessOpen(true);
       setBillItems([]);
       setCustomerPhone('');
       setCustomerEmail('');
-      toast.success("Sale completed successfully");
+      toast.success(isOnline ? "Sale completed and synced" : "Sale saved locally (offline)");
     } catch (error) {
       console.error("Failed to complete sale:", error);
       toast.error("Failed to save invoice");
@@ -167,6 +181,17 @@ export default function SellPage() {
               <h1 className="text-xl font-bold font-heading">New Sale</h1>
               <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{shopName}</p>
             </div>
+            {isOnline ? (
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/20 shadow-[0_0_15px_rgba(52,211,153,0.1)]">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.4)]" />
+                CONNECTED
+              </span>
+            ) : (
+                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-500/10 text-orange-400 text-[10px] font-bold border border-orange-500/20 shadow-[0_0_15px_rgba(251,146,60,0.1)]">
+                  <div className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse shadow-[0_0_8px_rgba(251,146,60,0.4)]" />
+                  OFFLINE (STORING LOCALLY)
+                </span>
+            )}
           </div>
         </div>
 
@@ -186,7 +211,7 @@ export default function SellPage() {
           {/* Search Results */}
           {searchTerm && (
             <GlassCard className="absolute top-full left-0 right-0 z-50 mt-2 p-2 max-h-80 overflow-y-auto overflow-x-hidden shadow-2xl border border-black/10 dark:border-white/10 bg-white/95 dark:bg-slate-950/95 backdrop-blur-3xl">
-              {searchResults?.map((item, index) => (
+              {searchResults?.map((item: Item, index: number) => (
                 <div
                   key={item.id}
                   className={`flex justify-between items-center p-4 rounded-xl cursor-pointer transition-colors ${index === selectedIndex ? 'bg-primary/20 shadow-md border border-primary/30' : 'hover:bg-primary/10'}`}
@@ -254,7 +279,7 @@ export default function SellPage() {
               <p className="text-xl font-bold">Bill is empty</p>
             </div>
           ) : (
-            billItems.map(item => (
+            billItems.map((item: BillItem) => (
               <GlassCard key={item.id} className="p-4 flex justify-between items-center border-white/5 animate-in slide-in-from-bottom-2 duration-300">
                 <div className="flex-1 min-w-0 mr-4">
                   <p className="font-bold text-lg truncate">{item.name}</p>

@@ -1,17 +1,18 @@
 import { useState, useEffect } from 'react';
-import { db, type Item } from '@/lib/db';
+import { db } from '@/data/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { GlassCard } from '@/components/GlassCard';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, AlertTriangle, Calendar, Package, RefreshCw, ChevronRight, Check } from 'lucide-react';
 import Link from 'next/link';
+import { type Product as Item } from '@/dexie/schema';
 
 export default function AlertsPage() {
   const [activeTab, setActiveTab] = useState<'stock' | 'expiry'>('stock');
 
   const lowStockItems = useLiveQuery(
-    () => db.items
-      .where('status').notEqual('deleted')
+    () => db.cache_products
+      .filter(item => item.status !== 'deleted')
       .and(item => item.stockQuantity <= item.lowStockThreshold)
       .toArray()
   );
@@ -21,8 +22,8 @@ export default function AlertsPage() {
       const thirtyDaysFromNow = new Date();
       thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
       
-      return await db.items
-        .where('status').notEqual('deleted')
+      return await db.cache_products
+        .filter(item => item.status !== 'deleted')
         .and(item => !!(item.expiryDate && new Date(item.expiryDate) <= thirtyDaysFromNow))
         .toArray();
     }
@@ -68,7 +69,7 @@ export default function AlertsPage() {
       <div className="space-y-4 pb-20">
         {activeTab === 'stock' && (
           <>
-            {lowStockItems?.map(item => (
+            {lowStockItems?.map((item: Item) => (
               <GlassCard key={item.id} className="p-5 border-red-500/20 bg-red-500/5 transition-all hover:bg-red-500/10 group">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
@@ -102,7 +103,7 @@ export default function AlertsPage() {
 
         {activeTab === 'expiry' && (
           <>
-            {expiringItems?.map(item => {
+            {expiringItems?.map((item: Item) => {
               const daysLeft = item.expiryDate ? Math.ceil((new Date(item.expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0;
               return (
                 <GlassCard key={item.id} className={`p-5 transition-all hover:bg-white/10 border-orange-500/20 bg-orange-500/5`}>

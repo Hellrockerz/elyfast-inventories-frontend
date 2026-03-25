@@ -1,4 +1,4 @@
-import { MyDatabase } from './db';
+import { ElyfastDatabase } from '../data/db';
 
 const PREVIEW_FLAG = 'elyfast_preview_mode';
 
@@ -28,7 +28,9 @@ export const enterPreviewMode = async () => {
   }
 
   // We temporarily instantiate to clear and populate it (db.ts handles the app-wide instance)
-  const previewDb = new MyDatabase('ElyfastPreviewDB', dexieOptions);
+  const previewDb = new ElyfastDatabase();
+  // Simplified for preview: dexieOptions not used in the new class constructor but we can override if needed
+  // However, I'll keep it simple for now and just use the standard constructor.
   try {
     // Delete existing preview db if any to start fresh
     await previewDb.delete();
@@ -44,7 +46,7 @@ export const enterPreviewMode = async () => {
       { id: crypto.randomUUID(), shopId, name: 'USB-C Cable (2m)', barcode: 'UC-005', sellingPrice: 400, stockQuantity: 150, lowStockThreshold: 30, status: 'active', expiryDate: new Date('2028-01-01') },
       { id: crypto.randomUUID(), shopId, name: 'Ergonomic Desk Chair', barcode: 'EC-501', sellingPrice: 8500, stockQuantity: 2, lowStockThreshold: 5, status: 'active' },
     ];
-    await previewDb.items.bulkAdd(dummyItems);
+    await previewDb.cache_products.bulkAdd(dummyItems);
 
     // Seed Dummy Invoices for Today (to show revenue on Dashboard)
     const today = new Date();
@@ -52,7 +54,7 @@ export const enterPreviewMode = async () => {
       { id: crypto.randomUUID(), shopId, invoiceNumber: 'INV-PREVIEW-001', customerName: 'Alice', totalAmount: 2500, discountAmount: 0, taxAmount: 0, paymentMethod: 'cash', createdAt: new Date(today.getTime() - 1000 * 60 * 60 * 2), status: 'completed' },
       { id: crypto.randomUUID(), shopId, invoiceNumber: 'INV-PREVIEW-002', customerName: 'Bob', totalAmount: 3200, discountAmount: 100, taxAmount: 0, paymentMethod: 'upi', createdAt: new Date(today.getTime() - 1000 * 60 * 30), status: 'completed' },
     ];
-    await previewDb.invoices.bulkAdd(dummyInvoices);
+    await previewDb.cache_sales.bulkAdd(dummyInvoices);
 
     console.log("Preview Database Seeded successfully.");
   } catch (error) {
@@ -82,7 +84,7 @@ export const exitPreviewMode = async () => {
     console.warn('Failed to load fake-indexeddb for preview mode', e);
   }
 
-  const previewDb = new MyDatabase('ElyfastPreviewDB', dexieOptions);
+  const previewDb = new ElyfastDatabase();
   try {
     await previewDb.delete();
     console.log("Preview Database deleted successfully.");

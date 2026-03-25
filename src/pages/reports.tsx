@@ -1,38 +1,39 @@
 import { useState, useEffect } from 'react';
-import { db, type Invoice } from '@/lib/db';
+import { db } from '@/data/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { GlassCard } from '@/components/GlassCard';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, TrendingUp, Receipt, Calendar, User, IndianRupee } from 'lucide-react';
 import Link from 'next/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { type Invoice } from '@/dexie/schema';
 
 export default function ReportsPage() {
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   const invoices = useLiveQuery(
-    () => db.invoices.orderBy('createdAt').reverse().toArray()
+    () => db.cache_sales.orderBy('createdAt').reverse().toArray()
   );
 
   const todaySales = useLiveQuery(
     async () => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const todayInvoices = await db.invoices
+      const todayInvoices = await db.cache_sales
         .where('createdAt')
-        .above(today)
+        .above(today.getTime())
         .toArray();
 
       return {
-        total: todayInvoices.reduce((acc, inv) => acc + inv.totalAmount, 0),
+        total: todayInvoices.reduce((acc: number, inv: Invoice) => acc + inv.totalAmount, 0),
         count: todayInvoices.length
       };
     }
   );
 
   const viewInvoiceDetails = async (invoice: Invoice) => {
-    const items = await db.invoiceItems.where('invoiceId').equals(invoice.id).toArray();
+    const items = await db.cache_sale_items.where('invoiceId').equals(invoice.id).toArray();
     setSelectedInvoice({ ...invoice, items });
     setIsDetailsOpen(true);
   };
@@ -76,7 +77,7 @@ export default function ReportsPage() {
       <h2 className="text-lg font-bold mb-4 px-1">Recent Invoices</h2>
 
       <div className="space-y-3 pb-20">
-        {invoices?.map(inv => (
+        {invoices?.map((inv: Invoice) => (
           <GlassCard
             key={inv.id}
             className="p-4 flex justify-between items-center cursor-pointer hover:bg-white/5 active:scale-[0.98] transition-all"

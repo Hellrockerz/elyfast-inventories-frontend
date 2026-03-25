@@ -1,16 +1,18 @@
 import { useState, useEffect, type ChangeEvent } from 'react';
-import { db, type Item } from '@/lib/db';
+import { db } from '@/data/db';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { GlassCard } from '@/components/GlassCard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Plus, Search, ArrowLeft, Edit2, Trash2, PackagePlus, Calendar, Hash, AlertTriangle } from 'lucide-react';
+import { Plus, Search, ArrowLeft, Edit2, Trash2, PackagePlus, Calendar, Hash, AlertTriangle, Wifi, WifiOff } from 'lucide-react';
 import Link from 'next/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { ItemService } from '@/lib/item-service';
-import { addStockMovement } from '@/lib/stock-service';
+import { ProductService } from '@/services/product.service';
+import { InventoryService } from '@/services/inventory.service';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { type Product as Item } from '@/dexie/schema'; 
 
 export default function InventoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,6 +33,7 @@ export default function InventoryPage() {
 
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [stockAdjustment, setStockAdjustment] = useState({ itemId: '', quantity: 1, itemName: '' });
+  const { isOnline } = useNetworkStatus();
 
   useEffect(() => {
     const storedShopId = localStorage.getItem('shopId');
@@ -38,8 +41,8 @@ export default function InventoryPage() {
   }, []);
 
   const items = useLiveQuery(
-    () => db.items
-      .where('status').notEqual('deleted')
+    () => db.cache_products
+      .filter(item => item.status !== 'deleted')
       .and(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
       .toArray(),
     [searchTerm]
@@ -57,7 +60,7 @@ export default function InventoryPage() {
     }
 
     const id = crypto.randomUUID();
-    const item: Item = {
+    const item: any = {
       id,
       shopId,
       name: newItem.name,
@@ -68,13 +71,14 @@ export default function InventoryPage() {
       expiryDate: newItem.expiryDate ? new Date(newItem.expiryDate) : undefined,
       batchNumber: newItem.batchNumber || '',
       status: 'active',
+      created_at: Date.now(),
     };
 
     try {
-      await ItemService.addItem(item);
+      await ProductService.addProduct(item);
       setIsAddOpen(false);
       resetForm();
-      toast.success("Item added successfully");
+      toast.success(isOnline ? "Item added and synced" : "Item saved locally (offline)");
     } catch (error) {
       console.error("Failed to add item:", error);
       toast.error("Failed to save item");
@@ -85,10 +89,10 @@ export default function InventoryPage() {
     if (!editingItem || !editingItem.name) return;
 
     try {
-      await ItemService.updateItem(editingItem);
+      await ProductService.updateProduct(editingItem);
       setIsEditOpen(false);
       setEditingItem(null);
-      toast.success("Item details updated");
+      toast.success(isOnline ? "Item updated and synced" : "Changes saved locally");
     } catch (error) {
       console.error("Failed to update item:", error);
       toast.error("Failed to update item");
@@ -102,7 +106,7 @@ export default function InventoryPage() {
         label: "Confirm",
         onClick: async () => {
           try {
-            await ItemService.deleteItem(id, shopId);
+            await ProductService.updateProduct({ id, status: 'deleted' });
             toast.success("Item deleted");
           } catch (error) {
             console.error("Failed to delete item:", error);
@@ -118,10 +122,10 @@ export default function InventoryPage() {
     if (!itemId || !quantity) return;
 
     try {
-      await addStockMovement(shopId, itemId, Number(quantity), 'restock');
+      await InventoryService.addStockMovement(shopId, itemId, Number(quantity), 'restock');
       setIsStockOpen(false);
       setStockAdjustment({ itemId: '', quantity: 1, itemName: '' });
-      toast.success("Stock quantity updated");
+      toast.success(isOnline ? "Stock updated and synced" : "Stock updated locally");
     } catch (error) {
       console.error("Failed to update stock:", error);
       toast.error("Failed to update stock");
@@ -156,6 +160,17 @@ export default function InventoryPage() {
           </Link>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold">Inventory</h1>
+            {isOnline ? (
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/20 shadow-[0_0_15px_rgba(52,211,153,0.1)]">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.4)]" />
+                CONNECTED
+              </span>
+            ) : (
+                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-500/10 text-orange-400 text-[10px] font-bold border border-orange-500/20 shadow-[0_0_15px_rgba(251,146,60,0.1)]">
+                  <div className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse shadow-[0_0_8px_rgba(251,146,60,0.4)]" />
+                  OFFLINE (STORING LOCALLY)
+                </span>
+            )}
           </div>
         </div>
         

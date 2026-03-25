@@ -8,11 +8,17 @@ import { useRouter } from "next/router";
 import { SubscriptionBanner } from "@/components/SubscriptionBanner";
 import { useSubscription } from "@/hooks/useSubscription";
 import { toast } from "sonner";
+import { SyncEngine } from "@/data/sync-engine";
 
 export default function App({ Component, pageProps }: AppProps) {
   const [isPreview, setIsPreview] = useState(false);
   const router = useRouter();
   const { isExpired, isWriteBlocked, subscription } = useSubscription();
+
+  // Initialize Sync Engine
+  useEffect(() => {
+    SyncEngine.start();
+  }, []);
 
   // Cleanup stale service workers in dev mode to prevent 404 spam
   useEffect(() => {

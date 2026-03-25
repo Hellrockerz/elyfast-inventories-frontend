@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/lib/db';
+import { db } from '@/data/db';
 import { GlassCard } from '@/components/GlassCard';
 import {
   Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend
@@ -16,12 +16,12 @@ export function DashboardCharts() {
     startDate.setHours(0, 0, 0, 0);
     startDate.setDate(startDate.getDate() - days + 1);
 
-    const invoices = await db.invoices.where('createdAt').aboveOrEqual(startDate).toArray();
-    const items = await db.items.toArray();
+    const invoices = await db.cache_sales.where('createdAt').aboveOrEqual(startDate.getTime()).toArray();
+    const items = await db.cache_products.toArray();
     const itemCostMap = new Map(items.map(i => [i.id, i.purchasePrice || 0]));
 
     const invoiceIds = invoices.map(i => i.id);
-    const invoiceItems = await db.invoiceItems.where('invoiceId').anyOf(invoiceIds).toArray();
+    const invoiceItems = await db.cache_sale_items.where('invoiceId').anyOf(invoiceIds).toArray();
 
     // Group by day - Map from Date string to Entry
     // Map preserves insertion order, so we insert chronologically
