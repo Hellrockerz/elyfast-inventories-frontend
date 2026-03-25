@@ -22,12 +22,12 @@ export function useSubscription() {
   const [subscription, setSubscription] = useState<SubscriptionInfo>(DEFAULT_SUB);
   const [loading, setLoading] = useState(true);
 
-  const isExpired = subscription.subscriptionStatus === 'expired' ||
+  const isExpired = !subscription.isAdmin && (subscription.subscriptionStatus === 'expired' ||
     (subscription.subscriptionValidUntil &&
       new Date(subscription.subscriptionValidUntil) < new Date() &&
-      subscription.subscriptionStatus !== 'active');
+      subscription.subscriptionStatus !== 'active'));
 
-  const isWriteBlocked = isExpired || subscription.subscriptionStatus === 'pending';
+  const isWriteBlocked = !subscription.isAdmin && (isExpired || subscription.subscriptionStatus === 'pending');
 
   const fetchSubscription = useCallback(async () => {
     const shopId = localStorage.getItem('shopId');

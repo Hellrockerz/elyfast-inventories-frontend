@@ -32,6 +32,8 @@ export default function App({ Component, pageProps }: AppProps) {
   // Listen for 402 subscription-expired events from API interceptor
   useEffect(() => {
     const handleExpired = () => {
+      if (subscription.isAdmin) return; // Admins are exempt from redirection
+      
       toast.error('Your subscription has expired. Redirecting to billing...', {
         duration: 3000,
       });
@@ -41,7 +43,7 @@ export default function App({ Component, pageProps }: AppProps) {
     };
     window.addEventListener('subscription-expired', handleExpired);
     return () => window.removeEventListener('subscription-expired', handleExpired);
-  }, [router]);
+  }, [router, subscription.isAdmin]);
 
   const handleExitPreview = async () => {
     await exitPreviewMode();
